@@ -74,7 +74,7 @@ class BirthDeath(Model):
   def getStoichiometry(self) -> np.array:
       return np.array([
           [1],
-          [1]])
+          [-1]])
 
   def getDefaultParameter(self) -> np.array:
       return np.array([1, 0.1])

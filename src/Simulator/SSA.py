@@ -30,8 +30,6 @@ class SSASimulator():
             rct_nbr = self.__getFiringReaction(props)
 
             t += tau
-            if(x[0] == 0):
-                a = 2
             x = x + stoich[rct_nbr]
             if(save_props):
                 props_list.append(props)

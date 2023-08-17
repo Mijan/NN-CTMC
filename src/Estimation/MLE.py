@@ -134,15 +134,18 @@ class MLEstimator:
 if __name__ == '__main__':
     from src.Models.models import BirthDeath
     from src.Models.models import ThreeSpeciesModel
+    from src.Models.models import BirthDeathPaper
     from src.Simulator.SSA import SSASimulator
     from src.Estimation.MLE import MLEstimator
     # model = BirthDeath()
-    model = ThreeSpeciesModel()
+    model = BirthDeathPaper()
+    # model = ThreeSpeciesModel()
     simulator = SSASimulator(model)
 
     parameters = model.getDefaultParameter()
     # y, t = simulator.run_ssa(np.array([5]), 10000, parameters)
-    y, t = simulator.run_ssa(np.array([80000, 10, 10]), 500, parameters)
+    y, t = simulator.run_ssa(np.array([500]), 10000, parameters)
+    # y, t = simulator.run_ssa(np.array([80000, 10, 10]), 500, parameters)
     estimator = MLEstimator(model, y, t)
     mle_matrix = estimator.computeMLETransitionMatrix()
     fig = estimator.plotMLEstimates(mle_matrix)

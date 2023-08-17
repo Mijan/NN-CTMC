@@ -16,7 +16,7 @@ class Model(ABC):
       pass
 
   @abstractmethod
-  def getStoichiometry(self, reaction_nbr: int) -> np.array:
+  def getStoichiometry(self) -> np.array:
       pass
 
   @abstractmethod
@@ -33,6 +33,10 @@ class Model(ABC):
 
   def getNumParameter(self) -> int:
     return len(self._parameter_names)
+
+  def getNumReactions(self) -> int:
+      stoich = self.getStoichiometry()
+      return len(stoich)
 
   def getSpeciesNames(self):
       return self._species_names

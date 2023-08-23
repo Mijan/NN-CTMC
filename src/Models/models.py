@@ -88,7 +88,7 @@ class ThreeSpeciesModel(Model):
 
   def __init__(self):
     super().__init__(["Prey", "Preditor","SuperPreditor"],
-                     ["alpha_1","alpha_2","alpha_3","alpha_4","alpha_5","alpha_6","alpha_7","alpha_8","alpha_9"],
+                     ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9"],
                      "3 Species Model")
 
   def getPropensities(self, state: np.array, t: float) -> np.array:
@@ -126,3 +126,41 @@ class ThreeSpeciesModel(Model):
 
   def getDefaultParameter(self) -> np.array:
       return np.array([0.5, 1.7, 3.9, 4.6, 2.7, 1.9, 6.1, 2.4, 1.5])
+
+class ChemicalReactionNetwork(Model):
+
+  def __init__(self):
+      super().__init__(["A", "B"],
+                       ["a1", "a2", "a3", "a4", "e1", "e2", "e3", "e4", "T"],
+                       "Chemical Reaction Network")
+
+  def getPropensities(self, state: np.array, t: float) -> np.array:
+      if len(state) != self.getNumSpecies():
+          raise Exception(
+              f"Provided number of states: {len(state)}, but expected number of states {len(self.getSpeciesNum())}")
+
+      A, B = state[:2]
+      a1, a2, a3, a4, e1, e2, e3, e4, T = self._parameters[:9]
+      R = 8.314
+      k1 = a1 * np.exp(-e1/ (R*T))
+      k2 = a2 * np.exp(-e2/ (R*T))
+      k3 = a3 * np.exp(-e3/ (R*T))
+      k4 = a4 * np.exp(-e4/ (R*T))
+
+      alpha_1 = A * (A-1) * k1
+      alpha_2 = A * B * k2
+      alpha_3 = k3
+      alpha_4 = k4
+
+      return np.array([alpha_1, alpha_2, alpha_3, alpha_4])
+
+  def getStoichiometry(self) -> np.array:
+      return np.array([
+          [-2, 0],
+          [-1, -1],
+          [1, 0],
+          [0, 1]
+      ])
+
+  def getDefaultParameter(self) -> np.array:
+      return np.array([630000, 770000, 5380000, 2240000, 39000, 36000, 40000, 40000, 273])

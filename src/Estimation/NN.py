@@ -61,14 +61,15 @@ if __name__ == "__main__":
     from src.Simulator.SSA import SSASimulator
     from src.Estimation.NN import CTMCModel
     from src.Models.utils import getReactionsForObservations
+    from tensorflow.keras.initializers import Constant
 
-    dynamic_model = BirthDeath()
-    # dynamic_model = ThreeSpeciesModel()
+    # dynamic_model = BirthDeath()
+    dynamic_model = ThreeSpeciesModel()
     simulator = SSASimulator(dynamic_model)
 
     parameters = dynamic_model.getDefaultParameter()
-    y, t = simulator.run_ssa(np.array([5]), 100, parameters)
-    # y, t = simulator.run_ssa(np.array([80000, 10, 10]), 100, parameters)
+    # y, t = simulator.run_ssa(np.array([5]), 100, parameters)
+    y, t = simulator.run_ssa(np.array([80000, 10, 10]), 1000, parameters)
     num_states = y.shape[1]
 
     reaction_indices, unique_reaction_mapping = getReactionsForObservations(y, dynamic_model.getStoichiometry())
@@ -80,11 +81,11 @@ if __name__ == "__main__":
     for rct, rct_map in enumerate(unique_reaction_mapping):
         true_alpha_unique[:, rct_map] += true_alpha[:, rct]
 
+    initializer = tf.keras.initializers.HeNormal()
     Model = tf.keras.models.Sequential([
         tf.keras.layers.Input((num_states,)),
-        tf.keras.layers.Dense(128, activation=tf.keras.activations.selu),
-        tf.keras.layers.Dense(128, activation=tf.keras.activations.selu),
-        tf.keras.layers.Dense(num_unique_stoch, activation=tf.keras.activations.softplus)
+        tf.keras.layers.Dense(128, activation=tf.keras.activations.selu, kernel_initializer=initializer),
+        tf.keras.layers.Dense(num_unique_stoch, activation=tf.keras.activations.softplus, kernel_initializer=Constant(0.1))
     ])
 
     custom_model = CTMCModel(Model)
@@ -92,9 +93,9 @@ if __name__ == "__main__":
     custom_model.compile(optimizer)
 
     tf.config.experimental_run_functions_eagerly(True)
-    train_dataset = tf.data.Dataset.from_tensor_slices((y[:-1], t[:-1], reaction_indices)).batch(
-        256)  # Batch size of 32 as an example
-    print(np.max(reaction_indices))
+    times_spent = t[1:] - t[:-1]
+    train_dataset = tf.data.Dataset.from_tensor_slices((y[:-1], times_spent, reaction_indices)).batch(
+        256)
     custom_model.fit(train_dataset, epochs=10)
 
     # Step 1: Use the trained custom_model to predict propensities for the states saved in y

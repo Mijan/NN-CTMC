@@ -1,12 +1,21 @@
 import numpy as np
 import tensorflow as tf
 from typing import Tuple, List
+from tensorflow.keras.initializers import Constant
 
-class CTMCModel(tf.keras.Model):
-    def __init__(self, base_model: tf.keras.Model, **kwargs):
-        super(CTMCModel, self).__init__(**kwargs)
-        self.base_model = base_model
+class CTMCKerasModel(tf.keras.Model):
+    def __init__(self, num_inputs, num_outputs, num_layers = 4, num_neurons = 64, learning_rate=0.001, **kwargs):
+        super(CTMCKerasModel, self).__init__(**kwargs)
+        model = tf.keras.models.Sequential()
+        model.add(tf.keras.layers.Input((num_inputs,)))
+        for _ in range(num_layers):
+            model.add(tf.keras.layers.Dense(num_neurons, activation=tf.keras.activations.selu))
+        model.add(tf.keras.layers.Dense(num_outputs, activation=tf.keras.activations.softplus,
+                                        kernel_initializer=Constant(0.1)))
+        self.base_model = model
         self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        self.compile(optimizer=self.optimizer, loss=self.computeLossTF)
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         return self.base_model(inputs)
@@ -52,6 +61,11 @@ class CTMCModel(tf.keras.Model):
 
 
 
+def getTrainDatasetFromSimulations(y: np.array, t: np.array, reaction_indices: np.array,  batch_size = 256):
+    times_spent = t[1:] - t[:-1]
+    train_dataset = tf.data.Dataset.from_tensor_slices((y[:-1], times_spent, reaction_indices)).batch(
+        batch_size)
+    return train_dataset
 
 
 # code for debugging purposes
@@ -59,9 +73,9 @@ if __name__ == "__main__":
     from src.Models.models import BirthDeath
     from src.Models.models import ThreeSpeciesModel
     from src.Simulator.SSA import SSASimulator
-    from src.Estimation.NN import CTMCModel
+    from src.Estimation.NN import CTMCKerasModel
+    from src.Estimation.NN import getTrainDatasetFromSimulations
     from src.Models.utils import getReactionsForObservations
-    from tensorflow.keras.initializers import Constant
 
     # dynamic_model = BirthDeath()
     dynamic_model = ThreeSpeciesModel()
@@ -75,40 +89,10 @@ if __name__ == "__main__":
     reaction_indices, unique_reaction_mapping = getReactionsForObservations(y, dynamic_model.getStoichiometry())
     num_unique_stoch = len(np.unique(unique_reaction_mapping))
 
-    # test computeLossFunction
-    true_alpha = np.array([dynamic_model.getPropensities(obs, time) for obs, time in zip(y, t)])
-    true_alpha_unique = np.zeros(shape=(true_alpha.shape[0], num_unique_stoch))
-    for rct, rct_map in enumerate(unique_reaction_mapping):
-        true_alpha_unique[:, rct_map] += true_alpha[:, rct]
 
-    initializer = tf.keras.initializers.HeNormal()
-    Model = tf.keras.models.Sequential([
-        tf.keras.layers.Input((num_states,)),
-        tf.keras.layers.Dense(128, activation=tf.keras.activations.selu, kernel_initializer=initializer),
-        tf.keras.layers.Dense(num_unique_stoch, activation=tf.keras.activations.softplus, kernel_initializer=Constant(0.1))
-    ])
+    custom_model = CTMCKerasModel(num_inputs=num_states, num_outputs=num_unique_stoch, num_layers=4)
 
-    custom_model = CTMCModel(Model)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-    custom_model.compile(optimizer)
-
-    tf.config.experimental_run_functions_eagerly(True)
-    times_spent = t[1:] - t[:-1]
-    train_dataset = tf.data.Dataset.from_tensor_slices((y[:-1], times_spent, reaction_indices)).batch(
-        256)
+    train_dataset = getTrainDatasetFromSimulations(y, t,reaction_indices)
     custom_model.fit(train_dataset, epochs=10)
-
-    # Step 1: Use the trained custom_model to predict propensities for the states saved in y
-    nn_predictions = custom_model.predict(y)
-    expected_propensities = true_alpha_unique
-
-    comparison = nn_predictions - expected_propensities
-
-    mse = np.mean(np.square(comparison))
-    print(f"Mean Squared Error between NN predictions and expected propensities: {mse}")
-
-    # Or simply compare them directly for a few instances:
-    for i in range(10):  # just printing the first 10 instances for brevity
-        print(f"NN Prediction: {nn_predictions[i]}, Expected: {expected_propensities[i]}, Difference: {comparison[i]}")
 
 

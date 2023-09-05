@@ -3,15 +3,16 @@ import tensorflow as tf
 from typing import Tuple, List
 from tensorflow.keras.initializers import Constant
 
-class CTMCKerasModel(tf.keras.Model):
+class FeedForwardPropensityModel(tf.keras.Model):
     def __init__(self, num_inputs, num_outputs, num_layers = 4, num_neurons = 64, learning_rate=0.001, **kwargs):
-        super(CTMCKerasModel, self).__init__(**kwargs)
+        super(FeedForwardPropensityModel, self).__init__(**kwargs)
         model = tf.keras.models.Sequential()
         model.add(tf.keras.layers.Input((num_inputs,)))
         for _ in range(num_layers):
             model.add(tf.keras.layers.Dense(num_neurons, activation=tf.keras.activations.selu))
         model.add(tf.keras.layers.Dense(num_outputs, activation=tf.keras.activations.softplus,
                                         kernel_initializer=Constant(0.1)))
+
         self.base_model = model
         self.loss_tracker = tf.keras.metrics.Mean(name="loss")
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
@@ -73,8 +74,8 @@ if __name__ == "__main__":
     from src.Models.models import BirthDeath
     from src.Models.models import ThreeSpeciesModel
     from src.Simulator.SSA import SSASimulator
-    from src.Estimation.NN import CTMCKerasModel
-    from src.Estimation.NN import getTrainDatasetFromSimulations
+    from src.Estimation.PropNN import FeedForwardPropensityModel
+    from src.Estimation.PropNN import getTrainDatasetFromSimulations
     from src.Models.utils import getReactionsForObservations
 
     # dynamic_model = BirthDeath()
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     num_unique_stoch = len(np.unique(unique_reaction_mapping))
 
 
-    custom_model = CTMCKerasModel(num_inputs=num_states, num_outputs=num_unique_stoch, num_layers=4)
+    custom_model = FeedForwardPropensityModel(num_inputs=num_states, num_outputs=num_unique_stoch, num_layers=4)
 
     train_dataset = getTrainDatasetFromSimulations(y, t,reaction_indices)
     custom_model.fit(train_dataset, epochs=10)

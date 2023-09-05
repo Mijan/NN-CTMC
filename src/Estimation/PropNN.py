@@ -61,39 +61,66 @@ class FeedForwardPropensityModel(tf.keras.Model):
         return tf.reduce_sum(loss_values)
 
 
+class DataPreparatorFullObs():
+    def __init__(self, batch_size=256):
+        self.__trajs = []
+        self.__times_spent = []
+        self.__reaction_indices = []
+        self.__batch_size = batch_size
 
-def getTrainDatasetFromSimulations(y: np.array, t: np.array, reaction_indices: np.array,  batch_size = 256):
-    times_spent = t[1:] - t[:-1]
-    train_dataset = tf.data.Dataset.from_tensor_slices((y[:-1], times_spent, reaction_indices)).batch(
-        batch_size)
-    return train_dataset
+    def addTrajectory(self, y: np.array, t: np.array, reaction_indices: np.array):
+        assert len(y) == len(t)
+        assert len(reaction_indices) == len(y) - 1
+
+        times_spent = t[1:] - t[:-1]
+        self.__trajs.extend(y[:-1])
+        self.__times_spent.extend(times_spent)
+        self.__reaction_indices.extend(reaction_indices)
+
+    def getTraindDataset(self):
+        trajs_np = np.array(self.__trajs)
+        times_spent_np = np.array(self.__times_spent)
+        reaction_indices_np = np.array(self.__reaction_indices)
+
+        train_dataset = tf.data.Dataset.from_tensor_slices(
+            (trajs_np, times_spent_np, reaction_indices_np)
+        ).batch(self.__batch_size)
+        return train_dataset
 
 
 # code for debugging purposes
-if __name__ == "__main__":
-    from src.Models.paper_examples import BirthDeath
-    from src.Models.paper_examples import ThreeSpeciesModel
-    from src.Simulator.SSA import SSASimulator
-    from src.Estimation.PropNN import FeedForwardPropensityModel
-    from src.Estimation.PropNN import getTrainDatasetFromSimulations
-    from src.Models.utils import getReactionsForObservations
-
-    # dynamic_model = BirthDeath()
-    dynamic_model = ThreeSpeciesModel()
-    simulator = SSASimulator(dynamic_model)
-
-    parameters = dynamic_model.getDefaultParameter()
-    # y, t = simulator.run_ssa(np.array([5]), 100, parameters)
-    y, t = simulator.run_ssa(np.array([80000, 10, 10]), 1000, parameters)
-    num_states = y.shape[1]
-
-    reaction_indices, unique_reaction_mapping = getReactionsForObservations(y, dynamic_model.getStoichiometry())
-    num_unique_stoch = len(np.unique(unique_reaction_mapping))
-
-
-    custom_model = FeedForwardPropensityModel(num_inputs=num_states, num_outputs=num_unique_stoch, num_layers=4)
-
-    train_dataset = getTrainDatasetFromSimulations(y, t,reaction_indices)
-    custom_model.fit(train_dataset, epochs=10)
-
+# if __name__ == "__main__":
+#     from src.Simulator.SSA import SSASimulator
+#     from src.Models.example_networks import LacGfp
+#     import matplotlib.pyplot as plt
+#     from src.Simulator.SSA import SSASimulator
+#     import numpy as np
+#     from src.Estimation.PropNN import FeedForwardPropensityModel
+#     from src.Estimation.PropNN import DataPreparatorFullObs
+#     from src.Models.utils import getReactionsForObservations
+#     from src.Estimation.utils import createPropensityPlot
+#     from src.Estimation.MLE import MLEstimator
+#
+#     model_lac = LacGfp()
+#     simulator_lac = SSASimulator(model_lac)
+#
+#     parameters = model_lac.getDefaultParameter()
+#     x0 = model_lac.getDefaultInitialState()
+#     y, t = simulator_lac.run_ssa(x0, 10, parameters)
+#     num_states = y.shape[1]
+#
+#     reaction_indices, unique_reaction_mapping = getReactionsForObservations(y, model_lac.getStoichiometry())
+#     num_unique_stoch = len(np.unique(unique_reaction_mapping))
+#
+#     custom_model = FeedForwardPropensityModel(num_inputs=num_states, num_outputs=num_unique_stoch, num_layers=4)
+#     data_preparator = DataPreparatorFullObs()
+#     data_preparator.addTrajectory(y, t, reaction_indices)
+#
+#     num_trajs = 50
+#     for num_traj in range(num_trajs - 1):
+#         y, t = simulator_lac.run_ssa(x0, 10, parameters)
+#         reaction_indices, unique_reaction_mapping = getReactionsForObservations(y, model_lac.getStoichiometry())
+#         data_preparator.addTrajectory(y, t, reaction_indices)
+#
+#     train_dataset = data_preparator.getTraindDataset()
 

@@ -11,7 +11,7 @@ class SysPlotter:
         num_species = len(species_names)
 
         nrows, ncols = getRowsCols(num_species)
-        fig, axs = plt.subplots(nrows=nrows, ncols=ncols)
+        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*5,nrows*3))
 
         if num_species >1:
             axs = axs.flatten()

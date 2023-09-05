@@ -71,8 +71,8 @@ def getTrainDatasetFromSimulations(y: np.array, t: np.array, reaction_indices: n
 
 # code for debugging purposes
 if __name__ == "__main__":
-    from src.Models.models import BirthDeath
-    from src.Models.models import ThreeSpeciesModel
+    from src.Models.paper_examples import BirthDeath
+    from src.Models.paper_examples import ThreeSpeciesModel
     from src.Simulator.SSA import SSASimulator
     from src.Estimation.PropNN import FeedForwardPropensityModel
     from src.Estimation.PropNN import getTrainDatasetFromSimulations

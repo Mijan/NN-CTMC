@@ -1,5 +1,5 @@
 
-from src.Models.models import Model
+from src.Models.paper_examples import Model
 import numpy as np
 
 class SSASimulator():
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     from src.Simulator.SSA import SSASimulator
     from src.Plotter.SystemPlotter import SysPlotter
 
-    from src.Models.models import ThreeSpeciesModel
+    from src.Models.paper_examples import ThreeSpeciesModel
 
     model = ThreeSpeciesModel()
     simulator = SSASimulator(model)

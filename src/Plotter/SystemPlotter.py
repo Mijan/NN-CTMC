@@ -1,5 +1,5 @@
 
-from src.Models.models import Model
+from src.Models.paper_examples import Model
 from typing import List
 import numpy as np
 import matplotlib.pylab as plt

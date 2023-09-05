@@ -1,5 +1,5 @@
 
-from src.Models.paper_examples import Model
+from src.Models.model import Model
 import numpy as np
 
 class SSASimulator():

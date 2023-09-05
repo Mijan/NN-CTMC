@@ -26,6 +26,9 @@ class BirthDeathPaper(Model):
   def getDefaultParameter(self) -> np.array:
       return np.array([])
 
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([100])
+
 
 
 class ThreeSpeciesModel(Model):
@@ -71,6 +74,9 @@ class ThreeSpeciesModel(Model):
   def getDefaultParameter(self) -> np.array:
       return np.array([0.5, 1.7, 3.9, 4.6, 2.7, 1.9, 6.1, 2.4, 1.5])
 
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([10**5,10,10])
+
 class ChemicalReactionNetwork(Model):
 
   def __init__(self):
@@ -108,3 +114,6 @@ class ChemicalReactionNetwork(Model):
 
   def getDefaultParameter(self) -> np.array:
       return np.array([630000, 770000, 5380000, 2240000, 39000, 36000, 40000, 40000, 273])
+
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([2,5])

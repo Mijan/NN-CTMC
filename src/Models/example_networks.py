@@ -19,6 +19,9 @@ class BirthDeath(Model):
   def getDefaultParameter(self) -> np.array:
       return np.array([1, 0.1])
 
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([0])
+
 
 class LacGfp(Model):
 
@@ -74,6 +77,9 @@ class LacGfp(Model):
   def getDefaultParameter(self) -> np.array:
       return np.array([1.5, 7.5, 1.5, 4.5, 5, 1650, 6, 0.48, 0.5, 230, 0.4, 125, 0.2, 0.01, 1.5, 32, 1, 2.2, 10])
 
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([3, 7, 0, 0, 0, 62, 0, 0, 0])
+
 class ERK(Model):
 
   def __init__(self):
@@ -126,3 +132,6 @@ class ERK(Model):
 
   def getDefaultParameter(self) -> np.array:
       return np.array([0.71787774, 0.02358723, 0.80829515, 0.21497361, 4.35903194, 0.05998804, 0.03087217, 0.39595766, 0.45148145, 2.46185222, 0.12292634, 0.68642178, 0.23168421, 1.86059625, 0.18694515, 2.69795479, 0.73323282, 0.04401609, 0.06329493, 0.37816525, 0.84081636, 0.93105391, 0.95446949, 0.05624321, 0.35055068, 0.33902887, 0.1367214, 3.29629793, 1.57101515])
+
+  def getDefaultInitialState(self) -> np.array:
+      return np.array([10, 0, 5, 0, 5, 0, 30, 0, 15, 0, 15, 0, 13, 0, 0])

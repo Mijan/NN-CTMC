@@ -1,6 +1,6 @@
-
 import numpy as np
 from .model import Model
+from typing import List
 
 
 
@@ -44,7 +44,6 @@ class ThreeSpeciesModel(Model):
 
     A, B, C = state[:3]
     k1, k2, k3, k4, k5, k6, k7, k8, k9 = self._parameters[:9]
-
     N = 10**5
     alpha_1 = B*k1
     alpha_2 = k2
@@ -77,6 +76,8 @@ class ThreeSpeciesModel(Model):
   def getDefaultInitialState(self) -> np.array:
       return np.array([10**5,10,10])
 
+  def getSpeciecByReaction(self) -> List[list]:
+      return [[1], [],[0],[0],[2],[],[0,1],[1,2]]
 class ChemicalReactionNetwork(Model):
 
   def __init__(self):
@@ -117,3 +118,6 @@ class ChemicalReactionNetwork(Model):
 
   def getDefaultInitialState(self) -> np.array:
       return np.array([2,5])
+
+  def getSpeciecByReaction(self) -> List[list]:
+    return [[0], [0, 1], [], []]

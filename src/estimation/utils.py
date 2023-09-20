@@ -1,4 +1,4 @@
-from src.Utils.GeneralUtils import getRowsCols
+from src.utils.generalutils import getRowsCols
 import matplotlib.pyplot as plt
 import numpy as np
 

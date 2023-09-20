@@ -1,9 +1,9 @@
 
 import numpy as np
-from src.Models.paper_examples import Model
+from src.models.paper_examples import Model
 import matplotlib.pyplot as plt
-from src.Utils.GeneralUtils import getRowsCols
-from src.Estimation.utils import createPropensityPlot
+from src.utils.generalutils import getRowsCols
+from src.estimation.utils import createPropensityPlot
 
 
 class MLEstimator:
@@ -104,11 +104,11 @@ class MLEstimator:
 
 # Debugging run
 if __name__ == '__main__':
-    from src.Models.paper_examples import BirthDeath
-    from src.Models.paper_examples import ThreeSpeciesModel
-    from src.Models.paper_examples import BirthDeathPaper
-    from src.Simulator.SSA import SSASimulator
-    from src.Estimation.MLE import MLEstimator
+    from src.models.paper_examples import BirthDeath
+    from src.models.paper_examples import ThreeSpeciesModel
+    from src.models.paper_examples import BirthDeathPaper
+    from src.simulator.ssa import SSASimulator
+    from src.estimation.mle import MLEstimator
     # model = BirthDeath()
     model = BirthDeathPaper()
     # model = ThreeSpeciesModel()

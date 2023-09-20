@@ -1,9 +1,9 @@
 
-from src.Models.model import Model
+from src.models.model import Model
 from typing import List
 import numpy as np
 import matplotlib.pylab as plt
-from src.Utils.GeneralUtils import getRowsCols
+from src.utils.generalutils import getRowsCols
 
 class SysPlotter:
     def plotSystem(self, states: np.array, ts: list, model:Model):

@@ -140,16 +140,16 @@ class DataPreparatorFullObs():
 
 # code for debugging purposes
 if __name__ == "__main__":
-    from src.Simulator.SSA import SSASimulator
-    from src.Models.example_networks import LacGfp
+    from src.simulator.ssa import SSASimulator
+    from src.models.example_networks import LacGfp
     import matplotlib.pyplot as plt
-    from src.Simulator.SSA import SSASimulator
+    from src.simulator.ssa import SSASimulator
     import numpy as np
-    from src.Estimation.FullObsNN import CombinedReactionsNN
-    from src.Estimation.FullObsNN import DataPreparatorFullObs
-    from src.Models.utils import getReactionsForObservations
-    from src.Estimation.utils import createPropensityPlot
-    from src.Estimation.MLE import MLEstimator
+    from src.estimation.fullobsnn import CombinedReactionsNN
+    from src.estimation.fullobsnn import DataPreparatorFullObs
+    from src.models.utils import getReactionsForObservations
+    from src.estimation.utils import createPropensityPlot
+    from src.estimation.mle import MLEstimator
 
     model_lac = LacGfp()
     simulator_lac = SSASimulator(model_lac)

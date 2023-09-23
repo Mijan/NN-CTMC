@@ -1,6 +1,8 @@
 import tensorflow as tf
 from typing import List
 import numpy as np
+from sklearn.model_selection import train_test_split
+import pandas as pd
 
 
 class MultiRNNTrainer:
@@ -57,6 +59,22 @@ class MultiRNNTrainer:
 
             model.fit(dataset, epochs=epochs)
 
+    def run_inference(self, test_datasets: List[tf.data.Dataset]):
+        assert(len(test_datasets) == len(self.datasets), "check your test datasets")
+
+        predictions = {}
+        for test_dataset, model in zip(test_datasets, self.models):
+            pred=[]
+            targ=[]
+            for feat, labels in test_dataset:
+                pred.append(model(feat))
+                targ.append(labels)
+            pred = np.vstack(pred).reshape(-1)
+            targ = np.vstack(targ).reshape(-1)
+            # pred.reshape(targ.shape)
+            predictions[model.name] = {"targ": targ, "pred" :pred}
+
+        return predictions
 
 class Generator:
     def __init__(self,
@@ -99,6 +117,34 @@ class Generator:
         return self.make_generator(self.test_df)
 
 
+def split_dataset(dataframe: pd.DataFrame):
+    dataframe = dataframe.copy()
+    # assert("time" in dataframe.columns, "columns should have a time column")
+    dataframe.set_index("time", inplace=True)
 
+    columns = dataframe.columns
+    num_columns = len(columns)
+    num_splits = 1 / num_columns
+
+    dataframe['t_sin'] = np.sin(2 * np.pi * dataframe.index)
+    dataframe['t_cos'] = np.cos(2 * np.pi * dataframe.index)
+
+    new_columns = ["t_sin", "t_cos"] + list(columns)
+    dataframe = dataframe[new_columns]
+
+    dataframes = []
+    for i in range(0, num_columns):
+        dataframes.append(
+            dataframe.iloc[int(i * num_splits * len(dataframe)):int(len(dataframe) * (i + 1) * num_splits),
+            [0, 1, i + 2]])
+
+    i = 0
+    dataframe_dict = {}
+    for dataframe_ in dataframes:
+        train_data, test_data = train_test_split(dataframe_, test_size=0.3, shuffle=False)
+        dataframe_dict[f"dataframe_{i}"] = {"train_data": train_data, "test_data": test_data}
+        i += 1
+
+    return dataframe_dict
 
 

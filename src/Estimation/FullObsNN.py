@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from tensorflow.keras.initializers import Constant
 import time
 
+
 class FullObsNN(tf.keras.Model, ABC):
     def __init__(self, learning_rate=1e-3, **kwargs):
         super(FullObsNN, self).__init__(**kwargs)
@@ -15,14 +16,16 @@ class FullObsNN(tf.keras.Model, ABC):
     def call(self, inputs: tf.Tensor, training=False) -> tf.Tensor:
         pass
 
-
     def train_step(self, data: Tuple[tf.Tensor, tf.Tensor, tf.Tensor]) -> dict:
         y, t, reaction_indices = data
 
         with tf.GradientTape() as tape:
             alpha = self.call(y, training=True)
+            # print(alpha)
             loss = self.computeLossTF(alpha, t, reaction_indices)
 
+        print(self.trainable_variables)
+        print(len(self.trainable_variables))
         trainable_vars = self.trainable_variables
         gradients = tape.gradient(loss, trainable_vars)
 
@@ -101,14 +104,71 @@ class IndividualReactionsNN(FullObsNN):
     def call(self, inputs: tf.Tensor, training=False) -> tf.Tensor:
         alpha = []
         for output_nbr, inputs_for_output in enumerate(self.inputs_by_outputs):
+            # print(inputs_for_output)
             if len(inputs_for_output) >= 1:
                 sliced_inputs = tf.gather(inputs, inputs_for_output, axis=1)
+                # print(sliced_inputs)
                 alpha.append(self.models[output_nbr](sliced_inputs, training=training))
             else:
                 dummy_input = tf.ones((tf.shape(inputs)[0], 1))
                 alpha.append(self.models[output_nbr](dummy_input, training=training))
 
         return tf.concat(alpha, axis=1)
+
+
+class AutoEncoder(tf.keras.Model):
+    def __init__(self):
+        super(AutoEncoder, self).__init__()
+        self.encoder = tf.keras.models.Sequential([
+            tf.keras.layers.Input((9,)),
+            tf.keras.layers.Dense(4,)
+        ])
+
+        self.decoder = tf.keras.models.Sequential([
+            tf.keras.layers.Dense(9, activation=tf.keras.activations.softplus),
+        ])
+
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+
+    def call(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+
+    def train_step(self, data):
+        x = data
+        with tf.GradientTape() as tape:
+            predictions = self(x, training=True)
+            loss = tf.keras.losses.MeanSquaredError()(x, predictions)
+        gradients = tape.gradient(loss, self.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+
+        self.loss_tracker.update_state(loss)
+
+        return {"loss": self.loss_tracker.result()}
+
+    @property
+    def metrics(self):
+        return [self.loss_tracker]
+
+
+class CombinedReactionsWithTrainedEncoder(FullObsNN):
+    def __init__(self,
+                 encoder: tf.keras.Model,
+                 num_outputs: int,
+                 **kwargs):
+        super(CombinedReactionsWithTrainedEncoder, self).__init__(**kwargs)
+        encoder.trainable = False
+        model = tf.keras.models.Sequential([
+            encoder,
+            tf.keras.layers.Dense(num_outputs, kernel_initializer=Constant(0.1)),
+            tf.keras.layers.Activation(tf.keras.activations.softplus)
+        ])
+        self.base_model = model
+        self.compile(optimizer=self.optimizer, loss=self.computeLossTF)
+
+    def call(self, inputs: tf.Tensor, training: bool = False) -> tf.Tensor:
+        return self.base_model(inputs, training = training)
 
 
 class DataPreparatorFullObs():
